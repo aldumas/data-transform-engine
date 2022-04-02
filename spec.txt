@@ -1,0 +1,84 @@
+- Defined a PHP-based config file, separate transform and parse routines
+- Validation of row format, log if error, include filename and line. Do quick validations first.
+- Flexible logging?
+- Think about the DB aspect. The DB outbound connector should take care not
+  to insert duplicates. What's the primary key? Order? Product?
+- Protect against SQL injection.
+- Inbound connector will provide the data. Provide an implementation for a
+  CSV inbound connector.
+- Outbound connector will do something with the transformed/normalized data.
+- Config file: expected format, name mapping, normalizing
+- Use attributes?
+- How does the process begin? Is there a single config file? Or 1 per source?
+- Design so multiple config files per source can be simultaneously supported.
+- Document extension points. E.g. adding new companies, and new formats.
+- Might not need an outbound abstraction since we are just loading it into a database.
+- Explain why use inbound abstraction (no control over customer data formats and these
+  may change over time).
+- source/sink terminology.
+- Consider asynchronous processing (rows are independent.) Or maybe the front of the
+  process is responsible for taking each file and starting a new invocation of PHP.
+- Maybe async processing could be one of the future modifications.
+- Describe indexes expected on the table for checking if the record already exists.
+- How should we handle the case where the row already exists but the record differs?
+- Invocation: php transform.php company_001.CSV
+  We grab an inbound connector that can process CSV files, and run it through the
+  engine.
+- Cases:
+  - 1-to-1 mapping of fields (with some massaging)
+  - many-to-1 mapping of fields (with some massaging)
+  - 1-to-many mapping of fields (with some massaging)
+- For the above cases, we need to specify a function to do the transform, but we also
+  need to give the library a way to pick the values from the columns in the CSV that
+  all need to be passed into the transform function.
+- What if the file name also contributes information?
+- Should I define a class for each format? But would that class know both the source
+  format and destination format and how to transform? That's a lot.
+  Perhaps a class that defines the expected format. A class that defines the expected
+  format. Need a way to map from one to another. This feels too heavyweight.
+- php transform.php --format=company_name company001.csv => format selects the config
+  file that describes that format.
+- Later: add --range=0,1000 to be able to specify only a subset of the file to process
+  Could also have a line number: --line=42 to process only that line
+- The range would allow you to split the work among several processes.
+- The range would select a class that has offsets it uses to process just part of the
+  file.
+- Take into account file encoding/locale. fgetcsv() takes locale into account.
+- Study and think about escaping in CSV files.
+- Think about how we can avoid preparing the same statement multiple times when we go
+  to do the insert.
+- Does the CSV file contain a header row? If so, can the order of the columns change?
+- Handle blank lines. See fgetcsv() on how it handles these.
+- Future: make it easy to manually fix and reprocess a line and a whole file (with option
+  to skip overwriting).
+- ASSUME ASCII. Future work would include setting the encoding in the format and making
+  sure the parser uses it.
+
+
+- TODO think about how exception would work if an exception happened when sending the
+  result to the sink.
+
+
+This is fundamentally a type casting operation, except we need the ability to combine
+multiple types to generate a new type.
+
+- TODO sinks should have a way to close them so the data is flushed. Also need a way to close sources.
+- TODO Create a SourceFactory class that takes the CLI inpout and creates the source needed.
+
+
+Architecture notes:
+- as we transform values, we keep a record of the transformations, all the way back to the source document.
+- config files are executable PHP code. No need to maintain a language. Can use PHP's functions (e.g. dynamically
+- set year on based on current time (instead of defining a "today" string and handling that.
+- where to find things... all config file vocabulary is in the Vocabulary directory...
+- what are the extension points?
+
+
+
+
+
+docker build -t wrangler .
+docker run --rm -it -v $PWD/data:/var/www/html/data wrangler
+docker run --rm -it -v $PWD/data:/var/www/html/data wrangler php -c sample ./data/sample.csv
+
+
