@@ -135,11 +135,3 @@ docker run --rm -it wrangler ./vendor/bin/phpunit ./test
 - Refactor the code to use a logger to make it easier to test logging messages.
 
 
-  
-
-TODO view logs... use docker logs or mount a volume?
-TODO add phpunit
-TODO add tests
-TODO add way to run the tests.
-TODO deliver!
-
